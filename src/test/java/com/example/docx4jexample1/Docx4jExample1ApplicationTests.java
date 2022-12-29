@@ -1,10 +1,13 @@
 package com.example.docx4jexample1;
 
+import jakarta.xml.bind.JAXBElement;
 import org.docx4j.Docx4J;
 import org.docx4j.XmlUtils;
 import org.docx4j.model.datastorage.migration.VariablePrepare;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
+import org.docx4j.utils.XPathFactoryUtil;
+import org.docx4j.wml.ContentAccessor;
 import org.docx4j.wml.Tbl;
 import org.docx4j.wml.Text;
 import org.docx4j.wml.Tr;
@@ -13,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
 
-import javax.xml.bind.JAXBElement;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.xpath.XPath;
@@ -21,10 +23,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.io.FileInputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -257,19 +256,115 @@ class Docx4jExample1ApplicationTests {
 
     @Test
     void template_add_row() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+//        XPathFactoryUtil.getXPathFactory().set
         try {
             File doc = new File("Doc3.docx");
-            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage
-                    .load(doc);
-            MainDocumentPart mainDocumentPart = wordMLPackage
-                    .getMainDocumentPart();
-            String trNodesXPath = "//w:t[starts-with(text(),\"${\")]/parent::r";
-            List<Object> textNodes = mainDocumentPart.getJAXBNodesViaXPath(trNodesXPath, true);
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+//            String trNodesXPath = "//w:t";
+//            String trNodesXPath = "//w:t[matches(text(), \"{([\\w\\d/]+)\")]";
+//            String trNodesXPath = "//w:t[fn:contains ( text(), \"name\")]";
+//            String trNodesXPath = "//w:t[text() contains 'Lastname']";
+//            String trNodesXPath = "//w:t[contains(text(), 'lastname')]";
+            String trNodesXPath = "//w:t[matches(text(), '\\{([\\w\\d/]+)\\}')]/parent::w:r/parent::w:p/parent::w:tc/parent::w:tr";
+            List<Object> trNodes = mainDocumentPart.getJAXBNodesViaXPath(trNodesXPath, false);
+
+            for (Object obj:trNodes) {
+                Tr templateRow = (Tr) obj;
+                Tbl table = (Tbl) templateRow.getParent();
+                int templateTrPos = table.getContent().indexOf(templateRow);
+                for (int i = 0; i < 5; i++) {
+                    Tr workingTr = XmlUtils.deepCopy(templateRow);
+                    List<Object> texts = getAllElementFromObject(workingTr, Text.class);
+                    for (Object obj1 : texts) {
+                        Text text = (Text) obj1;
+                        text.setValue(addRepeatParam(text.getValue(), i).orElse(text.getValue()));
+                    }
+                    table.getContent().add(templateTrPos + i + 1, workingTr);
+                }
+                table.getContent().remove(templateTrPos);
+            }
 
             File exportFile = new File("Docx3-updated.docx");
             wordMLPackage.save(exportFile);
         } catch (Exception e) {
             e.printStackTrace();
+        }
+    }
+
+    @Test
+    void template_add_row_2() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+//        XPathFactoryUtil.getXPathFactory().set
+        try {
+            File doc = new File("Doc3.docx");
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+//            String trNodesXPath = "//w:t";
+//            String trNodesXPath = "//w:t[matches(text(), \"{([\\w\\d/]+)\")]";
+//            String trNodesXPath = "//w:t[fn:contains ( text(), \"name\")]";
+//            String trNodesXPath = "//w:t[text() contains 'Lastname']";
+//            String trNodesXPath = "//w:t[contains(text(), 'lastname')]";
+            String repeatTRNodesXPath = "//w:t[matches(text(), '\\[([\\w\\d-]+)\\]')]/parent::w:r/parent::w:p/parent::w:tc/parent::w:tr";
+            List<Object> trNodes = mainDocumentPart.getJAXBNodesViaXPath(repeatTRNodesXPath, false);
+
+            for (Object obj:trNodes) {
+                Tr templateRow = (Tr) obj;
+                Tbl table = (Tbl) templateRow.getParent();
+                int templateTrPos = table.getContent().indexOf(templateRow);
+                for (int i = 0; i < 5; i++) {
+                    Tr workingTr = XmlUtils.deepCopy(templateRow);
+                    List<Object> texts = getAllElementFromObject(workingTr, Text.class);
+                    for (Object obj1 : texts) {
+                        Text text = (Text) obj1;
+                        text.setValue(addRepeatParam(text.getValue(), i).orElse(text.getValue()));
+                    }
+                    table.getContent().add(templateTrPos + i + 1, workingTr);
+                }
+                table.getContent().remove(templateTrPos);
+            }
+
+            File exportFile = new File("Docx3-updated.docx");
+            wordMLPackage.save(exportFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public List<Object> getAllElementFromObject(Object obj, Class<?> toSearch) {
+        List<Object> result = new ArrayList<Object>();
+        if (obj instanceof JAXBElement) obj = ((JAXBElement<?>) obj).getValue();
+
+        if (obj.getClass().equals(toSearch))
+            result.add(obj);
+        else if (obj instanceof ContentAccessor) {
+            List<?> children = ((ContentAccessor) obj).getContent();
+            for (Object child : children) {
+                result.addAll(getAllElementFromObject(child, toSearch));
+            }
+        }
+        return result;
+    }
+
+    public Optional<String> addRepeatParam(String input, int i) {
+        Pattern placeHolderPattern = Pattern.compile("^\\$\\{([\\w\\d\\/]*)}");
+        Matcher matcher = placeHolderPattern.matcher(input);
+
+        if (matcher.find()) {
+            return Optional.of(input.replaceFirst("[\\w\\d\\/]+", matcher.group(1) + "/" + i));
+        }
+        return Optional.empty();
+    }
+
+    @Test
+    void test_add_row() {
+        String input = "${/company/staff/lastname}";
+        Pattern placeHolderPattern = Pattern.compile("^\\$\\{([\\w\\d\\/]*)}");
+        Matcher matcher = placeHolderPattern.matcher(input);
+
+        if (matcher.find()) {
+            System.out.println(input.replaceFirst("[\\w\\d\\/]+", matcher.group(1) + "/1"));
         }
     }
 }
