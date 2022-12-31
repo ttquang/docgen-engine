@@ -7,10 +7,7 @@ import org.docx4j.model.datastorage.migration.VariablePrepare;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.docx4j.utils.XPathFactoryUtil;
-import org.docx4j.wml.ContentAccessor;
-import org.docx4j.wml.Tbl;
-import org.docx4j.wml.Text;
-import org.docx4j.wml.Tr;
+import org.docx4j.wml.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.w3c.dom.Document;
@@ -270,7 +267,7 @@ class Docx4jExample1ApplicationTests {
             String trNodesXPath = "//w:t[matches(text(), '\\{([\\w\\d/]+)\\}')]/parent::w:r/parent::w:p/parent::w:tc/parent::w:tr";
             List<Object> trNodes = mainDocumentPart.getJAXBNodesViaXPath(trNodesXPath, false);
 
-            for (Object obj:trNodes) {
+            for (Object obj : trNodes) {
                 Tr templateRow = (Tr) obj;
                 Tbl table = (Tbl) templateRow.getParent();
                 int templateTrPos = table.getContent().indexOf(templateRow);
@@ -309,7 +306,7 @@ class Docx4jExample1ApplicationTests {
             String repeatTRNodesXPath = "//w:t[matches(text(), '\\[([\\w\\d-]+)\\]')]/parent::w:r/parent::w:p/parent::w:tc/parent::w:tr";
             List<Object> trNodes = mainDocumentPart.getJAXBNodesViaXPath(repeatTRNodesXPath, false);
 
-            for (Object obj:trNodes) {
+            for (Object obj : trNodes) {
                 Tr templateRow = (Tr) obj;
                 Tbl table = (Tbl) templateRow.getParent();
                 int templateTrPos = table.getContent().indexOf(templateRow);
@@ -357,6 +354,16 @@ class Docx4jExample1ApplicationTests {
         return Optional.empty();
     }
 
+    public Optional<String> addRepeatParam(String input) {
+        Pattern placeHolderPattern = Pattern.compile("^\\$\\{([\\w\\d\\/]*)}");
+        Matcher matcher = placeHolderPattern.matcher(input);
+
+        if (matcher.find()) {
+            return Optional.of(matcher.group(1));
+        }
+        return Optional.empty();
+    }
+
     @Test
     void test_add_row() {
         String input = "${/company/staff/lastname}";
@@ -365,6 +372,111 @@ class Docx4jExample1ApplicationTests {
 
         if (matcher.find()) {
             System.out.println(input.replaceFirst("[\\w\\d\\/]+", matcher.group(1) + "/1"));
+        }
+    }
+
+    @Test
+    void template_add_row_customxml() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+//        XPathFactoryUtil.getXPathFactory().set
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document docData = db.parse(new File("data.xml"));
+            docData.getDocumentElement().normalize();
+            XPath xPath = XPathFactory.newInstance().newXPath();
+
+            File doc = new File("Doc3-customxml.docx");
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+//            String trNodesXPath = "//w:t";
+//            String trNodesXPath = "//w:t[matches(text(), \"{([\\w\\d/]+)\")]";
+//            String trNodesXPath = "//w:t[fn:contains ( text(), \"name\")]";
+//            String trNodesXPath = "//w:t[text() contains 'Lastname']";
+//            String trNodesXPath = "//w:t[contains(text(), 'lastname')]";
+
+            /*Handle display condition*/
+//            String displayConditionXPath = "//w:attr[@w:name=\"displayCondition\"][@w:val=\"true\"]/parent::w:customXmlPr/parent::w:customXml";
+//            List<Object> displayConditionParts = mainDocumentPart.getJAXBNodesViaXPath(displayConditionXPath, false);
+//
+//            for (Object obj : displayConditionParts) {
+//                /* Hide */
+//                Child child = (Child) ((JAXBElement) obj).getValue();
+//                ContentAccessor parent = (ContentAccessor) child.getParent();
+//                parent.getContent().remove(obj);
+//            }
+
+            /*Handle repeating*/
+            String repeatPartXPath = "//w:attr[@w:name=\"repeat\"][@w:val=\"true\"]/parent::w:customXmlPr/parent::w:customXml";
+            List<Object> repeatParts = mainDocumentPart.getJAXBNodesViaXPath(repeatPartXPath, false);
+
+            for (Object obj : repeatParts) {
+                CTCustomXmlElement repeatPart = (CTCustomXmlElement) ((JAXBElement) obj).getValue();
+                CTAttr dataAttr = repeatPart.getCustomXmlPr().getAttr("data");
+                NodeList repeatCount = (NodeList) xPath.compile(dataAttr.getVal()).evaluate(docData, XPathConstants.NODESET);
+                List<Object> contents = List.copyOf(repeatPart.getContent());
+                for (Object content : contents) {
+                    for (int i = 1; i <= repeatCount.getLength(); i++) {
+                        Object workingContent = XmlUtils.deepCopy(content);
+                        List<Object> texts = getAllElementFromObject(workingContent, Text.class);
+                        for (Object obj1 : texts) {
+                            Text text = (Text) obj1;
+                            Optional<String> dataField = addRepeatParam(text.getValue());
+                            if (dataField.isPresent()) {
+                                if ("value".equals(dataField.get())) {
+                                    System.out.println(dataAttr.getVal());
+                                    NodeList queryResult = (NodeList) xPath.compile(dataAttr.getVal() + "[" + i + "]")
+                                            .evaluate(docData, XPathConstants.NODESET);
+                                    if (queryResult.getLength() == 0) {
+                                        text.setValue("Not found");
+                                    } else {
+                                        text.setValue(queryResult.item(0).getTextContent());
+                                    }
+                                } else {
+                                    System.out.println(dataAttr.getVal() + "/" + dataField.get());
+                                    NodeList queryResult = (NodeList) xPath.compile(dataAttr.getVal() + "[" + i + "]/"
+                                            + dataField.get()).evaluate(docData, XPathConstants.NODESET);
+                                    if (queryResult.getLength() == 0) {
+                                        text.setValue("Not found");
+                                    } else {
+                                        text.setValue(queryResult.item(0).getTextContent());
+                                    }
+                                }
+
+                            }
+
+                        }
+
+                        repeatPart.getContent().add(workingContent);
+                    }
+                    repeatPart.getContent().remove(content);
+                }
+
+//                System.out.println(repeatPart.getElement());
+                /* Hide */
+//                ContentAccessor parent = (ContentAccessor) repeatPart.getParent();
+//                parent.getContent().remove(obj);
+            }
+//            for (Object obj:trNodes) {
+//                Tr templateRow = (Tr) obj;
+//                Tbl table = (Tbl) templateRow.getParent();
+//                int templateTrPos = table.getContent().indexOf(templateRow);
+//                for (int i = 0; i < 5; i++) {
+//                    Tr workingTr = XmlUtils.deepCopy(templateRow);
+//                    List<Object> texts = getAllElementFromObject(workingTr, Text.class);
+//                    for (Object obj1 : texts) {
+//                        Text text = (Text) obj1;
+//                        text.setValue(addRepeatParam(text.getValue(), i).orElse(text.getValue()));
+//                    }
+//                    table.getContent().add(templateTrPos + i + 1, workingTr);
+//                }
+//                table.getContent().remove(templateTrPos);
+//            }
+
+            File exportFile = new File("Docx3-customxml-updated.docx");
+            wordMLPackage.save(exportFile);
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 }

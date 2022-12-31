@@ -1,7 +1,8 @@
 <?xml version="1.0"?>
 <company>
     <staff id="1001">
-        <firstname>yong</firstname>
+        <firstname>yong1</firstname>
+        <firstname>yong2</firstname>
         <lastname>mook kim</lastname>
         <nickname>mkyong</nickname>
         <salary currency="USD">100000</salary>
