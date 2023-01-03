@@ -479,4 +479,32 @@ class Docx4jExample1ApplicationTests {
             e.printStackTrace();
         }
     }
+
+    @Test
+    void template_sdt() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document docData = db.parse(new File("data.xml"));
+            docData.getDocumentElement().normalize();
+            XPath xPath = XPathFactory.newInstance().newXPath();
+
+            File doc = new File("staff1.docx");
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+
+            for (Object content : mainDocumentPart.getContent()) {
+                System.out.println(content.getClass().getName());
+            }
+
+
+            File exportFile = new File("staff1-result.docx");
+            wordMLPackage.save(exportFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+
 }
