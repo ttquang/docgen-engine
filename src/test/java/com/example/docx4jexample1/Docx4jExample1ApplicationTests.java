@@ -375,6 +375,111 @@ class Docx4jExample1ApplicationTests {
         }
     }
 
+    private List<Object> cloneRepeatBlockContent(List<Object> contents) {
+        List<Object> cloneContents = new ArrayList<>();
+        for (Object content : contents) {
+            Object cloneContent = XmlUtils.deepCopy(content);
+            cloneContents.add(cloneContent);
+        }
+        return cloneContents;
+    }
+
+    private void fillData(Object workingContent, Document docData, String dataXpath, int index) {
+        try {
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            List<Object> texts = getAllElementFromObject(workingContent, Text.class);
+            for (Object obj1 : texts) {
+                Text text = (Text) obj1;
+                Optional<String> dataField = addRepeatParam(text.getValue());
+                if (dataField.isPresent()) {
+                    if ("value".equals(dataField.get())) {
+                        System.out.println(dataXpath);
+                        NodeList queryResult = (NodeList) xPath.compile(dataXpath + "[" + index + "]")
+                                .evaluate(docData, XPathConstants.NODESET);
+                        if (queryResult.getLength() == 0) {
+                            text.setValue("Not found");
+                        } else {
+                            text.setValue(queryResult.item(0).getTextContent());
+                        }
+                    } else {
+                        System.out.println(dataXpath + "/" + dataField.get());
+                        NodeList queryResult = (NodeList) xPath.compile(dataXpath + "[" + index + "]/"
+                                + dataField.get()).evaluate(docData, XPathConstants.NODESET);
+                        if (queryResult.getLength() == 0) {
+                            text.setValue("Not found");
+                        } else {
+                            text.setValue(queryResult.item(0).getTextContent());
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processRepeating(CTCustomXmlElement repeatBlock, String parentDataXpath, Document docData) {
+        try {
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            CTAttr dataAttr = repeatBlock.getCustomXmlPr().getAttr("data");
+            String currentDataXpath = parentDataXpath + dataAttr.getVal();
+            NodeList repeatCount = (NodeList) xPath.compile(currentDataXpath).evaluate(docData, XPathConstants.NODESET);
+            List<Object> repeatContents = List.copyOf(repeatBlock.getContent());
+
+            for (int i = 1; i <= repeatCount.getLength(); i++) {
+                List<Object> workingContents = cloneRepeatBlockContent(repeatContents);
+                for (Object obj : workingContents) {
+                    if (obj instanceof JAXBElement) {
+                        if (((JAXBElement) obj).getValue() instanceof CTCustomXmlElement) {
+                            CTCustomXmlElement repeatSubBlock = (CTCustomXmlElement) ((JAXBElement) obj).getValue();
+                            CTAttr repeatAttr = repeatBlock.getCustomXmlPr().getAttr("repeat");
+                            if (Objects.isNull(repeatAttr) || !"true".equals(repeatAttr.getVal())) {
+                                fillData(obj, docData, currentDataXpath, i);
+                            } else {
+                                processRepeating(repeatSubBlock, currentDataXpath + "[" + i + "]", docData);
+                            }
+                        }
+                    } else {
+                        fillData(obj, docData, currentDataXpath, i);
+                    }
+                }
+                repeatBlock.getContent().addAll(workingContents);
+            }
+            repeatBlock.getContent().removeAll(repeatContents);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Test
+    void template_add_row_customxml_new() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document docData = db.parse(new File("data.xml"));
+            docData.getDocumentElement().normalize();
+
+            File doc = new File("Doc3-customxml.docx");
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+
+            /*Handle repeating*/
+            String repeatPartXPath = "//w:attr[@w:name=\"loopLevel\"][@w:val=\"1\"]/parent::w:customXmlPr/parent::w:customXml";
+            List<Object> repeatParts = mainDocumentPart.getJAXBNodesViaXPath(repeatPartXPath, false);
+
+            for (Object obj : repeatParts) {
+                CTCustomXmlElement repeatBlock = (CTCustomXmlElement) ((JAXBElement) obj).getValue();
+                processRepeating(repeatBlock, "", docData);
+            }
+
+            File exportFile = new File("Docx3-customxml-updated.docx");
+            wordMLPackage.save(exportFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     @Test
     void template_add_row_customxml() {
         XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
@@ -389,11 +494,6 @@ class Docx4jExample1ApplicationTests {
             File doc = new File("Doc3-customxml.docx");
             WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
             MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
-//            String trNodesXPath = "//w:t";
-//            String trNodesXPath = "//w:t[matches(text(), \"{([\\w\\d/]+)\")]";
-//            String trNodesXPath = "//w:t[fn:contains ( text(), \"name\")]";
-//            String trNodesXPath = "//w:t[text() contains 'Lastname']";
-//            String trNodesXPath = "//w:t[contains(text(), 'lastname')]";
 
             /*Handle display condition*/
 //            String displayConditionXPath = "//w:attr[@w:name=\"displayCondition\"][@w:val=\"true\"]/parent::w:customXmlPr/parent::w:customXml";
@@ -442,41 +542,163 @@ class Docx4jExample1ApplicationTests {
                                         text.setValue(queryResult.item(0).getTextContent());
                                     }
                                 }
-
                             }
-
                         }
-
                         repeatPart.getContent().add(workingContent);
                     }
                     repeatPart.getContent().remove(content);
                 }
 
-//                System.out.println(repeatPart.getElement());
-                /* Hide */
-//                ContentAccessor parent = (ContentAccessor) repeatPart.getParent();
-//                parent.getContent().remove(obj);
             }
-//            for (Object obj:trNodes) {
-//                Tr templateRow = (Tr) obj;
-//                Tbl table = (Tbl) templateRow.getParent();
-//                int templateTrPos = table.getContent().indexOf(templateRow);
-//                for (int i = 0; i < 5; i++) {
-//                    Tr workingTr = XmlUtils.deepCopy(templateRow);
-//                    List<Object> texts = getAllElementFromObject(workingTr, Text.class);
-//                    for (Object obj1 : texts) {
-//                        Text text = (Text) obj1;
-//                        text.setValue(addRepeatParam(text.getValue(), i).orElse(text.getValue()));
-//                    }
-//                    table.getContent().add(templateTrPos + i + 1, workingTr);
-//                }
-//                table.getContent().remove(templateTrPos);
-//            }
 
             File exportFile = new File("Docx3-customxml-updated.docx");
             wordMLPackage.save(exportFile);
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @Test
+    void template_add_row_customxml_new_2() {
+        XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
+        try {
+            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
+            DocumentBuilder db = dbf.newDocumentBuilder();
+            Document docData = db.parse(new File("data.xml"));
+            docData.getDocumentElement().normalize();
+
+            File doc = new File("Doc3-customxml.docx");
+            WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
+            MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+            List<Object> contents = List.copyOf(mainDocumentPart.getContent());
+
+            for (Object content : contents) {
+                processContent(content, "", docData);
+            }
+
+            File exportFile = new File("Docx3-customxml-updated.docx");
+            wordMLPackage.save(exportFile);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void processContent(Object content, String parentDataXpath, Document docData) {
+        try {
+            System.out.println(parentDataXpath);
+            XPath xPath = XPathFactory.newInstance().newXPath();
+            if (isContentControlElement(content)) {
+                if (isCustomXmlElement(content)) {
+                    CTCustomXmlElement customXmlElement = (CTCustomXmlElement) ((JAXBElement) content).getValue();
+                    CTAttr dataAttr = customXmlElement.getCustomXmlPr().getAttr("data");
+                    if (isRepeat(customXmlElement)) {
+                        System.out.println(parentDataXpath + dataAttr.getVal());
+                        NodeList repeatCount = (NodeList) xPath.compile(parentDataXpath + dataAttr.getVal()).evaluate(docData, XPathConstants.NODESET);
+                        List<Object> repeatContents = List.copyOf(customXmlElement.getContent());
+                        for (int i = 1; i <= repeatCount.getLength(); i++) {
+                            List<Object> workingContents = cloneRepeatBlockContent(repeatContents);
+                            for (Object obj : workingContents) {
+                                processContent(obj, parentDataXpath + dataAttr.getVal() + "[" + i + "]", docData);
+                            }
+                            customXmlElement.getContent().addAll(workingContents);
+                        }
+                        customXmlElement.getContent().removeAll(repeatContents);
+                    } else {
+                        String dataXpath = "";
+
+                        if (Objects.nonNull(dataAttr)) {
+                            dataXpath = dataAttr.getVal();
+                        }
+
+                        for (Object childContent : customXmlElement.getContent()) {
+                            processContent(childContent, parentDataXpath + dataXpath, docData);
+                        }
+                    }
+                } else {
+                    ContentAccessor contentAccessor;
+
+                    if (content instanceof JAXBElement) {
+                        contentAccessor = (ContentAccessor) ((JAXBElement) content).getValue();
+                    } else {
+                        contentAccessor = (ContentAccessor) content;
+                    }
+
+                    for (Object childContent : contentAccessor.getContent()) {
+                        processContent(childContent, parentDataXpath, docData);
+                    }
+                }
+            } else {
+                List<Object> texts = getAllElementFromObject(content, Text.class);
+                for (Object obj1 : texts) {
+                    Text text = (Text) obj1;
+                    Optional<String> dataField = addRepeatParam(text.getValue());
+                    if (dataField.isPresent()) {
+                        if ("value".equals(dataField.get())) {
+                            NodeList queryResult = (NodeList) xPath.compile(parentDataXpath)
+                                    .evaluate(docData, XPathConstants.NODESET);
+                            if (queryResult.getLength() == 0) {
+                                text.setValue("Not found");
+                            } else {
+                                text.setValue(queryResult.item(0).getTextContent());
+                            }
+                        } else {
+                            System.out.println(parentDataXpath + "/" + dataField.get());
+                            NodeList queryResult = (NodeList) xPath.compile(parentDataXpath + "/"
+                                    + dataField.get()).evaluate(docData, XPathConstants.NODESET);
+                            if (queryResult.getLength() == 0) {
+                                text.setValue("Not found");
+                            } else {
+                                text.setValue(queryResult.item(0).getTextContent());
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private boolean isRepeat(CTCustomXmlElement customXmlElement) {
+        CTAttr repeatAttr = customXmlElement.getCustomXmlPr().getAttr("repeat");
+        if (Objects.nonNull(repeatAttr) && "true".equals(repeatAttr.getVal())) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isCustomXmlElement(Object element) {
+        if (element instanceof JAXBElement) {
+            element = ((JAXBElement<?>) element).getValue();
+        }
+
+        if (element instanceof CTCustomXmlElement) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isContentControlElement(Object content) {
+        return isContentControlElement(content, CTCustomXmlRow.class)
+                || isContentControlElement(content, CTCustomXmlBlock.class);
+    }
+
+    public boolean isContentControlElement(Object obj, Class<?> toSearch) {
+        if (obj instanceof JAXBElement) {
+            obj = ((JAXBElement<?>) obj).getValue();
+        }
+
+        if (obj.getClass().equals(toSearch)) {
+            return true;
+        } else if (obj instanceof ContentAccessor) {
+            List<?> children = ((ContentAccessor) obj).getContent();
+            for (Object child : children) {
+                if (isContentControlElement(child, toSearch)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
     }
 }

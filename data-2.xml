@@ -3,6 +3,21 @@
     <staff id="1001">
         <firstname>yong1</firstname>
         <firstname>yong2</firstname>
+        <friend>
+            <name>a</name>
+            <role>a.1</role>
+            <role>a.2</role>
+        </friend>
+        <friend>
+            <name>b</name>
+            <role>b.1</role>
+            <role>b.2</role>
+        </friend>
+        <friend>
+            <name>c</name>
+            <role>c.1</role>
+            <role>c.2</role>
+        </friend>
         <lastname>mook kim</lastname>
         <nickname>mkyong</nickname>
         <salary currency="USD">100000</salary>
