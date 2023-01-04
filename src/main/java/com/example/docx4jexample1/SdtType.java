@@ -1,18 +1,18 @@
 package com.example.docx4jexample1;
 
-public enum SdtBlockType {
+public enum SdtType {
     TEXT("Text"),
     LOOP("Loop"),
     IF("If");
 
     public final String label;
 
-    SdtBlockType(String label) {
+    SdtType(String label) {
         this.label = label;
     }
 
-    public static SdtBlockType valueOfLabel(String label) {
-        for (SdtBlockType e : values()) {
+    public static SdtType valueOfLabel(String label) {
+        for (SdtType e : values()) {
             if (e.label.equals(label)) {
                 return e;
             }

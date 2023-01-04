@@ -1,7 +1,6 @@
 package com.example.docx4jexample1;
 
 import jakarta.xml.bind.JAXBElement;
-import org.docx4j.XmlUtils;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.openpackaging.parts.WordprocessingML.MainDocumentPart;
 import org.docx4j.utils.XPathFactoryUtil;
@@ -9,13 +8,9 @@ import org.docx4j.wml.*;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.util.List;
 
@@ -56,9 +51,9 @@ class SdtTests1 {
                 SdtBlock block = (SdtBlock) content;
                 ContentAccessor blockParent = (ContentAccessor) block.getParent();
                 int blockIndex = blockParent.getContent().indexOf(block);
-                SdtBlockWrapper blockWrapper = new SdtBlockWrapper(block,parentDataPath);
-                blockParent.getContent().remove(block);
-                blockParent.getContent().add(blockIndex, blockWrapper);
+//                SdtWrapper blockWrapper = new SdtWrapper(block,parentDataPath);
+//                blockParent.getContent().remove(block);
+//                blockParent.getContent().add(blockIndex, blockWrapper);
 
 
                 SdtElement sdtElement = (SdtElement) content;
