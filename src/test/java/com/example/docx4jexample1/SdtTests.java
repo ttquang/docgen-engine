@@ -18,6 +18,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.util.List;
+import java.util.Stack;
 
 @SpringBootTest
 class SdtTests {
@@ -35,12 +36,23 @@ class SdtTests {
             Document docData = db.parse(new File("data.xml"));
             docData.getDocumentElement().normalize();
 
-            File doc = new File("staff1.docx");
+            File doc = new File("staff-table.docx");
             WordprocessingMLPackage wordMLPackage = WordprocessingMLPackage.load(doc);
             MainDocumentPart mainDocumentPart = wordMLPackage.getMainDocumentPart();
+            Stack<SdtElement> sdtBlockStack = new Stack<>();
 
             for (Object content : mainDocumentPart.getContent()) {
-                processContent(content, docData, "");
+                processContent(content, docData, "", sdtBlockStack);
+            }
+
+            while (!sdtBlockStack.empty()) {
+                SdtElement sdtElement = sdtBlockStack.pop();
+                ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
+                int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
+                if (blockIndex >= 0) {
+                    contentAccessor.getContent().remove(blockIndex);
+                    contentAccessor.getContent().addAll(blockIndex, sdtElement.getSdtContent().getContent());
+                }
             }
 
             File exportFile = new File("staff1-result.docx");
@@ -50,12 +62,17 @@ class SdtTests {
         }
     }
 
-    private void processContent(Object content, Document docData, String parentDataPath) {
+    private void processContent(Object content, Document docData, String parentDataPath, Stack<SdtElement> sdtBlockStack) {
         try {
             XPath xPath = XPathFactory.newInstance().newXPath();
             if (isContentControlIncluding(content)) {
-                if (content instanceof SdtBlock) {
+                if (content instanceof JAXBElement) {
+                    content = ((JAXBElement) content).getValue();
+                }
+
+                if (content instanceof SdtBlock || content instanceof CTSdtRow) {
                     SdtElement sdtElement = (SdtElement) content;
+                    sdtBlockStack.push(sdtElement);
                     String dataPatch = getTag(sdtElement);
                     String currentDataPath = parentDataPath + dataPatch;
 
@@ -63,11 +80,11 @@ class SdtTests {
                         NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(docData, XPathConstants.NODESET);
                         if (repeatCount.getLength() > 0) {
                             System.out.println(repeatCount.item(0).getTextContent());
-                            P p = (P) sdtElement.getSdtContent().getContent().get(0);
-                            R r = (R) p.getContent().get(0);
-                            Text text = (Text) ((JAXBElement) r.getContent().get(0)).getValue();
-                            r.setRPr(null);
-                            text.setValue(repeatCount.item(0).getTextContent());
+                            sdtElement.getSdtPr().setShowingPlcHdr(false);
+                            P p = Utils.createParagraphOfText(repeatCount.item(0).getTextContent());
+                            sdtElement.getSdtContent().getContent().clear();
+                            sdtElement.getSdtContent().getContent().add(p);
+
                         }
                     } else if (isLoopControl(sdtElement)) {
                         NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(docData, XPathConstants.NODESET);
@@ -76,15 +93,28 @@ class SdtTests {
                         for (int i = 1; i <= repeatCount.getLength(); i++) {
                             for (Object templateContent : templateContents) {
                                 Object workingContent = XmlUtils.deepCopy(templateContent);
-                                processContent(workingContent, docData, currentDataPath + "[" + i + "]");
+                                processContent(workingContent, docData, currentDataPath + "[" + i + "]", sdtBlockStack);
                                 sdtElement.getSdtContent().getContent().add(workingContent);
                             }
                         }
+                        sdtElement.getSdtContent().getContent().removeAll(templateContents);
+                    } else if (isIfControl(sdtElement)) {
+                        for (Object child:sdtElement.getSdtContent().getContent()) {
+                            processContent(child, docData, parentDataPath, sdtBlockStack);
+                        }
+//                        ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
+//                        contentAccessor.getContent().remove(sdtElement);
                     }
                 } else {
-                    ContentAccessor contentAccessor = (ContentAccessor) content;
+                    ContentAccessor contentAccessor;
+                    if (content instanceof JAXBElement) {
+                        contentAccessor = (ContentAccessor) ((JAXBElement) content).getValue();
+                    } else {
+                        contentAccessor = (ContentAccessor) content;
+                    }
+
                     for (Object child : contentAccessor.getContent()) {
-                        processContent(child, docData, parentDataPath);
+                        processContent(child, docData, parentDataPath, sdtBlockStack);
                     }
                 }
             }
@@ -98,7 +128,7 @@ class SdtTests {
             obj = ((JAXBElement) obj).getValue();
         }
 
-        if (obj instanceof SdtBlock) {
+        if (obj instanceof SdtBlock || obj instanceof CTSdtRow) {
             SdtElement sdtElement = (SdtElement) obj;
             if (isContentControl(sdtElement))
                 return true;
@@ -117,7 +147,7 @@ class SdtTests {
             if (prObj instanceof JAXBElement) {
                 if (((JAXBElement) prObj).getValue() instanceof SdtPr.Alias) {
                     SdtPr.Alias alias = (SdtPr.Alias) ((JAXBElement) prObj).getValue();
-                    if ("Loop".equals(alias.getVal()) || "Text".equals(alias.getVal()))
+                    if ("Loop".equals(alias.getVal()) || "Text".equals(alias.getVal()) || "If".equals(alias.getVal()))
                         return true;
                 }
             }
@@ -144,6 +174,19 @@ class SdtTests {
                 if (((JAXBElement) prObj).getValue() instanceof SdtPr.Alias) {
                     SdtPr.Alias alias = (SdtPr.Alias) ((JAXBElement) prObj).getValue();
                     if ("Loop".equals(alias.getVal()))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean isIfControl(SdtElement sdtElement) {
+        for (Object prObj : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
+            if (prObj instanceof JAXBElement) {
+                if (((JAXBElement) prObj).getValue() instanceof SdtPr.Alias) {
+                    SdtPr.Alias alias = (SdtPr.Alias) ((JAXBElement) prObj).getValue();
+                    if ("If".equals(alias.getVal()))
                         return true;
                 }
             }

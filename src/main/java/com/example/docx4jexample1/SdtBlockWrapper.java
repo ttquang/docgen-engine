@@ -1,6 +1,7 @@
 package com.example.docx4jexample1;
 
 import jakarta.xml.bind.JAXBElement;
+import org.docx4j.wml.ContentAccessor;
 import org.docx4j.wml.SdtBlock;
 import org.docx4j.wml.SdtPr;
 import org.docx4j.wml.Tag;
@@ -24,6 +25,8 @@ public class SdtBlockWrapper {
             } else if (prObj instanceof Tag) {
                 this.datasource += ((Tag) prObj).getVal();
             }
+
+            ContentAccessor blockParent = (ContentAccessor) block.getParent();
         }
     }
 
