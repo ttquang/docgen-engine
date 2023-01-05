@@ -70,7 +70,7 @@ class SdtTests {
                     content = ((JAXBElement) content).getValue();
                 }
 
-                if (content instanceof SdtBlock || content instanceof CTSdtRow) {
+                if (content instanceof SdtElement) {
                     SdtElement sdtElement = (SdtElement) content;
                     sdtBlockStack.push(sdtElement);
                     String dataPatch = getTag(sdtElement);
@@ -99,7 +99,7 @@ class SdtTests {
                         }
                         sdtElement.getSdtContent().getContent().removeAll(templateContents);
                     } else if (isIfControl(sdtElement)) {
-                        for (Object child:sdtElement.getSdtContent().getContent()) {
+                        for (Object child : sdtElement.getSdtContent().getContent()) {
                             processContent(child, docData, parentDataPath, sdtBlockStack);
                         }
 //                        ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
@@ -156,13 +156,15 @@ class SdtTests {
     }
 
     private boolean isTextControl(SdtElement sdtElement) {
-        for (Object prObj : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
-            if (prObj instanceof JAXBElement) {
-                if (((JAXBElement) prObj).getValue() instanceof SdtPr.Alias) {
-                    SdtPr.Alias alias = (SdtPr.Alias) ((JAXBElement) prObj).getValue();
-                    if ("Text".equals(alias.getVal()))
-                        return true;
-                }
+        for (Object property : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
+            if (property instanceof JAXBElement) {
+                property = ((JAXBElement) property).getValue();
+            }
+
+            if (property instanceof SdtPr.Alias) {
+                SdtPr.Alias alias = (SdtPr.Alias) property;
+                if ("Text".equals(alias.getVal()))
+                    return true;
             }
         }
         return false;
