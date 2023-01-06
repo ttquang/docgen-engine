@@ -6,12 +6,12 @@ import java.util.Map;
 import java.util.Objects;
 
 public class ConditionEvaluationUtils {
+    private static JexlEngine jexl = new JexlBuilder().create();
 
     public static boolean evaluate(String expressionCondition, Map<String, Object> inputs) {
         boolean result = false;
         if (expressionCondition.isBlank()) {
             try {
-                JexlEngine jexl = new JexlBuilder().create();
                 JexlExpression e = jexl.createExpression(expressionCondition);
 
                 JexlContext jc = new MapContext();
@@ -25,8 +25,6 @@ public class ConditionEvaluationUtils {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
-            } finally {
-                return result;
             }
         }
         return result;

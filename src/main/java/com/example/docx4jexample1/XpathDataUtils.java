@@ -10,12 +10,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class XpathDataUtils {
+    private static XPath xPath = XPathFactory.newInstance().newXPath();
 
     public static Map<String, Object> evaluate(Document data, String keyValuePairs) {
         Map<String, Object> result = new HashMap<>();
         if (!keyValuePairs.isBlank()) {
             try {
-                XPath xPath = XPathFactory.newInstance().newXPath();
                 String[] keyValuePairArr = keyValuePairs.split(";");
                 for (String keyValuePair : keyValuePairArr) {
                     String s[] = keyValuePair.split("#");
@@ -32,7 +32,21 @@ public class XpathDataUtils {
                 e.printStackTrace();
             }
         }
+        return result;
+    }
 
+    public static String evaluate2(Document data, String xpath) {
+        String result = "";
+        if (!xpath.isBlank()) {
+            try {
+                NodeList nodeList = (NodeList) xPath.compile(xpath).evaluate(data, XPathConstants.NODESET);
+                if (nodeList.getLength() > 0) {
+                    result = nodeList.item(0).getTextContent();
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
         return result;
     }
 

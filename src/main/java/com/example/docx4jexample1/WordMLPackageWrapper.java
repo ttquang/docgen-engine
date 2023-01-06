@@ -75,19 +75,15 @@ public class WordMLPackageWrapper {
                 if (content instanceof SdtElement) {
                     SdtElement sdtElement = (SdtElement) content;
                     sdtBlockStack.push(sdtElement);
-                    String dataPatch = Utils.getTag(sdtElement);
-                    String currentDataPath = parentDataPath + dataPatch;
+                    String dataPath = sdtElement.getSdtPr().getTag().getVal();
+                    String currentDataPath = parentDataPath + dataPath;
 
                     if (Utils.isTextControl(sdtElement)) {
-                        NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(data, XPathConstants.NODESET);
-                        if (repeatCount.getLength() > 0) {
-                            System.out.println(repeatCount.item(0).getTextContent());
-                            sdtElement.getSdtPr().setShowingPlcHdr(false);
-                            P p = Utils.createParagraphOfText(repeatCount.item(0).getTextContent());
-                            sdtElement.getSdtContent().getContent().clear();
-                            sdtElement.getSdtContent().getContent().add(p);
-
-                        }
+                        String value = XpathDataUtils.evaluate2(data, currentDataPath);
+                        sdtElement.getSdtPr().setShowingPlcHdr(false);
+                        P p = Utils.createParagraphOfText(value);
+                        sdtElement.getSdtContent().getContent().clear();
+                        sdtElement.getSdtContent().getContent().add(p);
                     } else if (Utils.isLoopControl(sdtElement)) {
                         NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(data, XPathConstants.NODESET);
                         List<Object> templateContents = List.copyOf(sdtElement.getSdtContent().getContent());
@@ -101,9 +97,9 @@ public class WordMLPackageWrapper {
                         }
                         sdtElement.getSdtContent().getContent().removeAll(templateContents);
                     } else if (Utils.isIfControl(sdtElement)) {
-                        Map<String,Object> ifExpressionInput = XpathDataUtils.evaluate(data,dataPatch);
+                        Map<String, Object> ifExpressionInput = XpathDataUtils.evaluate(data, dataPath);
                         String ifExpression = Utils.getIfExpression(Utils.getAlias(sdtElement));
-                        if (ConditionEvaluationUtils.evaluate(ifExpression,ifExpressionInput)) {
+                        if (ConditionEvaluationUtils.evaluate(ifExpression, ifExpressionInput)) {
                             for (Object child : sdtElement.getSdtContent().getContent()) {
                                 processContent(child, parentDataPath);
                             }
