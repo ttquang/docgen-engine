@@ -4,14 +4,7 @@ import jakarta.xml.bind.JAXBElement;
 import org.docx4j.XmlUtils;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.wml.*;
-import org.w3c.dom.Document;
-import org.w3c.dom.NodeList;
 
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.xpath.XPath;
-import javax.xml.xpath.XPathConstants;
-import javax.xml.xpath.XPathFactory;
 import java.io.File;
 import java.util.List;
 import java.util.Map;
@@ -19,16 +12,12 @@ import java.util.Stack;
 
 public class WordMLPackageWrapper {
     private WordprocessingMLPackage wordMLPackage;
-    private Stack<SdtElement> sdtBlockStack = new Stack<>();
-    private Document data;
+    private Stack<SdtElement> sdtElementStack = new Stack<>();
+    private DataSource ds;
 
     public WordMLPackageWrapper(File templateFile, File dataFile) {
         try {
-            DocumentBuilderFactory dbf = DocumentBuilderFactory.newInstance();
-            DocumentBuilder db = dbf.newDocumentBuilder();
-            this.data = db.parse(dataFile);
-            this.data.getDocumentElement().normalize();
-
+            this.ds = new DataSource(dataFile);
             this.wordMLPackage = WordprocessingMLPackage.load(templateFile);
         } catch (Exception e) {
             e.printStackTrace();
@@ -45,8 +34,8 @@ public class WordMLPackageWrapper {
     }
 
     public void removeContentControl() {
-        while (!sdtBlockStack.empty()) {
-            SdtElement sdtElement = sdtBlockStack.pop();
+        while (!sdtElementStack.empty()) {
+            SdtElement sdtElement = sdtElementStack.pop();
             ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
             int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
             if (blockIndex >= 0) {
@@ -66,7 +55,6 @@ public class WordMLPackageWrapper {
 
     private void processContent(Object content, String parentDataPath) {
         try {
-            XPath xPath = XPathFactory.newInstance().newXPath();
             if (isContentControlIncluding(content)) {
                 if (content instanceof JAXBElement) {
                     content = ((JAXBElement) content).getValue();
@@ -74,43 +62,21 @@ public class WordMLPackageWrapper {
 
                 if (content instanceof SdtElement) {
                     SdtElement sdtElement = (SdtElement) content;
-                    sdtBlockStack.push(sdtElement);
+                    sdtElementStack.push(sdtElement);
                     String dataPath = sdtElement.getSdtPr().getTag().getVal();
                     String currentDataPath = parentDataPath + dataPath;
 
                     if (Utils.isTextControl(sdtElement)) {
-                        String value = XpathDataUtils.evaluate2(data, currentDataPath);
-                        sdtElement.getSdtPr().setShowingPlcHdr(false);
-                        P p = Utils.createParagraphOfText(value);
-                        sdtElement.getSdtContent().getContent().clear();
-                        sdtElement.getSdtContent().getContent().add(p);
+                        sdtElement.getSdtPr().getTag().setVal(currentDataPath);
+                        handleText(sdtElement);
                     } else if (Utils.isLoopControl(sdtElement)) {
-                        NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(data, XPathConstants.NODESET);
-                        List<Object> templateContents = List.copyOf(sdtElement.getSdtContent().getContent());
-
-                        for (int i = 1; i <= repeatCount.getLength(); i++) {
-                            for (Object templateContent : templateContents) {
-                                Object workingContent = XmlUtils.deepCopy(templateContent);
-                                processContent(workingContent, currentDataPath + "[" + i + "]");
-                                sdtElement.getSdtContent().getContent().add(workingContent);
-                            }
-                        }
-                        sdtElement.getSdtContent().getContent().removeAll(templateContents);
+                        sdtElement.getSdtPr().getTag().setVal(currentDataPath);
+                        handleLoop(sdtElement);
                     } else if (Utils.isIfControl(sdtElement)) {
-                        Map<String, Object> ifExpressionInput = XpathDataUtils.evaluate(data, dataPath);
-                        String ifExpression = Utils.getIfExpression(Utils.getAlias(sdtElement));
-                        if (ConditionEvaluationUtils.evaluate(ifExpression, ifExpressionInput)) {
-                            for (Object child : sdtElement.getSdtContent().getContent()) {
-                                processContent(child, parentDataPath);
-                            }
-                        } else {
-                            ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
-                            contentAccessor.getContent().remove(sdtElement);
-                        }
+                        handleIf(sdtElement, parentDataPath);
                     }
                 } else {
                     ContentAccessor contentAccessor = (ContentAccessor) content;
-
                     for (Object child : contentAccessor.getContent()) {
                         processContent(child, parentDataPath);
                     }
@@ -138,6 +104,41 @@ public class WordMLPackageWrapper {
             }
         }
         return false;
+    }
+
+    public void handleText(SdtElement contentControl) {
+        String value = ds.evaluateAsString(contentControl.getSdtPr().getTag().getVal());
+        contentControl.getSdtPr().setShowingPlcHdr(false);
+        P p = Utils.createParagraphOfText(value);
+        contentControl.getSdtContent().getContent().clear();
+        contentControl.getSdtContent().getContent().add(p);
+    }
+
+    public void handleLoop(SdtElement contentControl) {
+        int count = ds.count(contentControl.getSdtPr().getTag().getVal());
+        List<Object> templateContents = List.copyOf(contentControl.getSdtContent().getContent());
+
+        for (int i = 1; i <= count; i++) {
+            for (Object templateContent : templateContents) {
+                Object workingContent = XmlUtils.deepCopy(templateContent);
+                processContent(workingContent, contentControl.getSdtPr().getTag().getVal() + "[" + i + "]");
+                contentControl.getSdtContent().getContent().add(workingContent);
+            }
+        }
+        contentControl.getSdtContent().getContent().removeAll(templateContents);
+    }
+
+    public void handleIf(SdtElement contentControl, String parentDataPath) {
+        Map<String, Object> ifExpressionInput = ds.evaluateAsMap(contentControl.getSdtPr().getTag().getVal());
+        String ifExpression = Utils.getIfExpression(Utils.getAlias(contentControl));
+        if (ConditionEvaluationUtils.evaluate(ifExpression, ifExpressionInput)) {
+            for (Object child : contentControl.getSdtContent().getContent()) {
+                processContent(child, parentDataPath);
+            }
+        } else {
+            ContentAccessor contentAccessor = (ContentAccessor) contentControl.getParent();
+            contentAccessor.getContent().remove(contentControl);
+        }
     }
 
 }
