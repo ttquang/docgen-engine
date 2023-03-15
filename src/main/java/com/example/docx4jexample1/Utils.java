@@ -134,4 +134,10 @@ public class Utils {
         return "";
     }
 
+    public static Object getContent(Object inputObj) {
+        if (inputObj instanceof JAXBElement)
+            return ((JAXBElement<?>) inputObj).getValue();
+        return inputObj;
+    }
+
 }

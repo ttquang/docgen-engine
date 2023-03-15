@@ -20,8 +20,12 @@ class WordMLPackageWrapperTest {
     void template_sdt() {
         XPathFactoryUtil.setxPathFactory(new net.sf.saxon.xpath.XPathFactoryImpl());
         try {
+            TemplateFactory.load();
+            File dataFile = new File("Cheque_Issuance_Form-data.xml");
+            DataSource dataSource = DataSourceFactory.constructXMLDataSource(dataFile);
             WordMLPackageWrapper wordMLPackageWrapper =
-                    new WordMLPackageWrapper(new File("Cheque_Issuance_Form.docx"),new File("Cheque_Issuance_Form-data.xml"));
+//                    new WordMLPackageWrapper(new File("Cheque_Issuance_Form.docx"),new File("Cheque_Issuance_Form-data.xml"));
+                    new WordMLPackageWrapper(TemplateFactory.get("Cheque_Issuance_Form.docx"), dataSource);
             wordMLPackageWrapper.process();
             wordMLPackageWrapper.save(new File("Cheque_Issuance_Form-result.docx"));
 
@@ -29,7 +33,7 @@ class WordMLPackageWrapperTest {
 //            document4j
             File inputWord = new File("Cheque_Issuance_Form-result.docx");
             File outputFile = new File("Cheque_Issuance_Form-result.pdf");
-            try  {
+            try {
                 InputStream docxInputStream = new FileInputStream(inputWord);
                 OutputStream outputStream = new FileOutputStream(outputFile);
                 IConverter converter = LocalConverter.builder().build();
