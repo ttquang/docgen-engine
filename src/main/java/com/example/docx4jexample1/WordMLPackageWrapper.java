@@ -1,6 +1,7 @@
 package com.example.docx4jexample1;
 
 import jakarta.xml.bind.JAXBElement;
+import org.docx4j.Docx4J;
 import org.docx4j.XmlUtils;
 import org.docx4j.openpackaging.packages.WordprocessingMLPackage;
 import org.docx4j.wml.*;
@@ -13,6 +14,7 @@ import javax.xml.xpath.XPath;
 import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathFactory;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -64,6 +66,17 @@ public class WordMLPackageWrapper {
         }
     }
 
+    public void savePDF(File file) {
+        try {
+            FileOutputStream os = new FileOutputStream(file);
+            Docx4J.toPDF(wordMLPackage,os);
+            os.flush();
+            os.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     private void processContent(Object content, String parentDataPath) {
         try {
             XPath xPath = XPathFactory.newInstance().newXPath();
@@ -82,23 +95,37 @@ public class WordMLPackageWrapper {
                         NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(data, XPathConstants.NODESET);
                         if (repeatCount.getLength() > 0) {
                             System.out.println(repeatCount.item(0).getTextContent());
-                            sdtElement.getSdtPr().setShowingPlcHdr(false);
-                            P p = Utils.createParagraphOfText(repeatCount.item(0).getTextContent());
-                            sdtElement.getSdtContent().getContent().clear();
-                            sdtElement.getSdtContent().getContent().add(p);
+                            if (sdtElement instanceof SdtRun) {
+                                SdtRun sdtRun = (SdtRun) sdtElement;
+                                R run = (R) sdtRun.getSdtContent().getContent().get(0);
+                                Text text = Utils.createText(repeatCount.item(0).getTextContent());
+                                run.getContent().clear();
+                                run.getContent().add(text);
 
+                            } else {
+                                sdtElement.getSdtPr().setShowingPlcHdr(false);
+                                P p = Utils.createParagraphOfText(repeatCount.item(0).getTextContent());
+                                sdtElement.getSdtContent().getContent().clear();
+                                sdtElement.getSdtContent().getContent().add(p);
+                            }
                         }
                     } else if (Utils.isLoopControl(sdtElement)) {
                         NodeList repeatCount = (NodeList) xPath.compile(currentDataPath).evaluate(data, XPathConstants.NODESET);
                         List<Object> templateContents = List.copyOf(sdtElement.getSdtContent().getContent());
 
-                        for (int i = 1; i <= repeatCount.getLength(); i++) {
-                            for (Object templateContent : templateContents) {
-                                Object workingContent = XmlUtils.deepCopy(templateContent);
-                                processContent(workingContent, currentDataPath + "[" + i + "]");
-                                sdtElement.getSdtContent().getContent().add(workingContent);
+                        if (repeatCount.getLength() == 0) {
+                            ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
+                            contentAccessor.getContent().remove(sdtElement);
+                        } else {
+                            for (int i = 1; i <= repeatCount.getLength(); i++) {
+                                for (Object templateContent : templateContents) {
+                                    Object workingContent = XmlUtils.deepCopy(templateContent);
+                                    processContent(workingContent, currentDataPath + "[" + i + "]");
+                                    sdtElement.getSdtContent().getContent().add(workingContent);
+                                }
                             }
                         }
+
                         sdtElement.getSdtContent().getContent().removeAll(templateContents);
                     } else if (Utils.isIfControl(sdtElement)) {
                         Map<String,Object> ifExpressionInput = XpathDataUtils.evaluate(data,dataPatch);
@@ -130,7 +157,7 @@ public class WordMLPackageWrapper {
             obj = ((JAXBElement) obj).getValue();
         }
 
-        if (obj instanceof SdtBlock || obj instanceof CTSdtRow) {
+        if (obj instanceof SdtElement) {
             SdtElement sdtElement = (SdtElement) obj;
             if (Utils.isContentControl(sdtElement))
                 return true;

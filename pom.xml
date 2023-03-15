@@ -61,6 +61,57 @@
             <artifactId>jakarta.activation-api</artifactId>
             <version>2.1.0</version>
         </dependency>
+        <dependency>
+            <groupId>org.docx4j</groupId>
+            <artifactId>docx4j-export-fo</artifactId>
+            <version>11.4.8</version>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>e-iceblue</groupId>-->
+<!--            <artifactId>spire.doc.free</artifactId>-->
+<!--            <version>5.2.0</version>-->
+<!--        </dependency>-->
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-api</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-util-conversion</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-transformer</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-util-all</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-local</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.documents4j</groupId>
+            <artifactId>documents4j-transformer-msoffice-word</artifactId>
+            <version>1.0.3</version>
+        </dependency>
+
+<!--        <dependency>-->
+<!--            <groupId>com.aspose</groupId>-->
+<!--            <artifactId>aspose-words</artifactId>-->
+<!--            <version>14.7.0</version>-->
+<!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-jexl3 -->
         <dependency>
@@ -76,6 +127,13 @@
             <scope>test</scope>
         </dependency>
     </dependencies>
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>com.e-iceblue</id>-->
+<!--            <name>e-iceblue</name>-->
+<!--            <url>https://repo.e-iceblue.com/nexus/content/groups/public/</url>-->
+<!--        </repository>-->
+<!--    </repositories>-->
 
     <build>
         <plugins>

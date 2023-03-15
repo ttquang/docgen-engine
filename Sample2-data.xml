@@ -1,0 +1,57 @@
+<?xml version="1.0"?>
+<collaterals>
+    <group>
+        <name>HM cho vay, bảo lãnh, bao thanh toán, L/C trả chậm, chiết khấu D/P, D/A</name>
+        <collateral-type>
+            <type>Hàng hoá</type>
+            <total-value>1000</total-value>
+            <pledge-amount>200</pledge-amount>
+            <pledge-percent>200</pledge-percent>
+            <item>
+                <name>Agricultural Products Tên tài sản</name>
+                <value>1000</value>
+                <pledge-amount>200</pledge-amount>
+                <pledge-percent>200</pledge-percent>
+            </item>
+        </collateral-type>
+        <collateral-type>
+            <type>Bất động sản</type>
+            <total-value>1000</total-value>
+            <pledge-amount>200</pledge-amount>
+            <pledge-percent>200</pledge-percent>
+            <item>
+                <name>DNTN Liễu Phú Vinh/GCN số QSHNOQSDDO số 757312600803157 - Đinh Thành Vinh Trần Thị Liễu</name>
+                <value>1000</value>
+                <pledge-amount>200</pledge-amount>
+                <pledge-percent>200</pledge-percent>
+            </item>
+        </collateral-type>
+    </group>
+    <group>
+        <name>HM phát hành L/C trả ngay</name>
+        <collateral-type>
+            <type>Hàng hoá</type>
+            <total-value>1000</total-value>
+            <pledge-amount>200</pledge-amount>
+            <pledge-percent>200</pledge-percent>
+            <item>
+                <name>Agricultural Products Tên tài sản</name>
+                <value>1000</value>
+                <pledge-amount>200</pledge-amount>
+                <pledge-percent>200</pledge-percent>
+            </item>
+        </collateral-type>
+        <collateral-type>
+            <type>Bất động sản</type>
+            <total-value>1000</total-value>
+            <pledge-amount>200</pledge-amount>
+            <pledge-percent>200</pledge-percent>
+            <item>
+                <name>DNTN Liễu Phú Vinh/GCN số QSHNOQSDDO số 757312600803157 - Đinh Thành Vinh Trần Thị Liễu</name>
+                <value>1000</value>
+                <pledge-amount>200</pledge-amount>
+                <pledge-percent>200</pledge-percent>
+            </item>
+        </collateral-type>
+    </group>
+</collaterals>

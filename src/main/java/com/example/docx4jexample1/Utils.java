@@ -43,6 +43,13 @@ public class Utils {
         return para;
     }
 
+    public static Text createText(String simpleText) {
+        ObjectFactory factory = Context.getWmlObjectFactory();
+        Text t = factory.createText();
+        t.setValue(simpleText);
+        return t;
+    }
+
     public static boolean isContentControl(SdtElement sdtElement) {
         for (Object prObj : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
             if (prObj instanceof JAXBElement) {

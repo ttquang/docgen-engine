@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<application>
+    <App_Ref_No>Test</App_Ref_No>
+    <MC_Issue_Code>Test</MC_Issue_Code>
+    <MC_Issue_By>Test</MC_Issue_By>
+    <Main_applicant>
+        <Salutation>Test</Salutation>
+        <Thai_Name>Test</Thai_Name>
+        <Thai_Surname>Test</Thai_Surname>
+    </Main_applicant>
+    <Joint_applicant>
+        <sn>1</sn>
+        <Salutation>Test</Salutation>
+        <Thai_Name>Test</Thai_Name>
+        <Thai_Surname>Test</Thai_Surname>
+    </Joint_applicant>
+    <Joint_applicant>
+        <sn>2</sn>
+        <Salutation>Test</Salutation>
+        <Thai_Name>Test</Thai_Name>
+        <Thai_Surname>Test</Thai_Surname>
+    </Joint_applicant>
+</application>
