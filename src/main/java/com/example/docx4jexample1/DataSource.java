@@ -8,4 +8,5 @@ public interface DataSource {
     List<String> getData2(String name);
     int count(String name);
     boolean evaluateCondition(String dataPatch, String conditionExpression);
+    boolean evaluateCondition(String parentDataPatch,String dataPatch, String conditionExpression);
 }

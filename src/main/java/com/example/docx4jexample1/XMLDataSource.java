@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public class XMLDataSource implements DataSource{
+public class XMLDataSource implements DataSource {
 
     private Document document;
     private XPath xPath = XPathFactory.newInstance().newXPath();
@@ -59,7 +59,7 @@ public class XMLDataSource implements DataSource{
     public boolean evaluateCondition(String dataPatch, String ifExpression) {
         boolean result = false;
         try {
-            Map<String,Object> ifExpressionInput = new HashMap<>();
+            Map<String, Object> ifExpressionInput = new HashMap<>();
             if (!dataPatch.isBlank()) {
                 String[] keyValuePairArr = dataPatch.split(";");
                 for (String keyValuePair : keyValuePairArr) {
@@ -74,7 +74,38 @@ public class XMLDataSource implements DataSource{
                     }
                 }
 
-                result = ConditionEvaluationUtils.evaluate(ifExpression,ifExpressionInput);
+                result = ConditionEvaluationUtils.evaluate(ifExpression, ifExpressionInput);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            return result;
+        }
+    }
+
+    @Override
+    public boolean evaluateCondition(String parentDataPatch, String dataPatch, String conditionExpression) {
+        boolean result = false;
+        try {
+            Map<String, Object> ifExpressionInput = new HashMap<>();
+            if (!dataPatch.isBlank()) {
+                String[] keyValuePairArr = dataPatch.split(";");
+                for (String keyValuePair : keyValuePairArr) {
+                    String s[] = keyValuePair.split("#");
+                    String key = s[0];
+                    if (key.startsWith("./")) {
+                        key = key.replace(".", parentDataPatch);
+                    }
+                    String value = s[1];
+                    NodeList nodeList = (NodeList) this.xPath.compile(value).evaluate(document, XPathConstants.NODESET);
+                    if (nodeList.getLength() > 0) {
+                        ifExpressionInput.put(key, nodeList.item(0).getTextContent());
+                    } else {
+                        ifExpressionInput.put(key, "");
+                    }
+                }
+
+                result = ConditionEvaluationUtils.evaluate(conditionExpression, ifExpressionInput);
             }
         } catch (Exception e) {
             e.printStackTrace();
