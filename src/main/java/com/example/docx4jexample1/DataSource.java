@@ -8,8 +8,6 @@ public interface DataSource {
     Optional<String> getData(String parentDataPatch, String dataPatch);
     List<String> getData2(String name);
     int count(String name);
-    boolean evaluateCondition(String dataPatch, String conditionExpression);
-    boolean evaluateCondition(String parentDataPatch,String dataPatch, String conditionExpression);
     boolean evaluateSimpleIfCondition(String parentDataPatch, String dataPatch);
     boolean evaluateSimpleIfNotCondition(String parentDataPatch, String dataPatch);
 }

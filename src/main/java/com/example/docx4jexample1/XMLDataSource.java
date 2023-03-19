@@ -74,65 +74,6 @@ public class XMLDataSource implements DataSource {
     }
 
     @Override
-    public boolean evaluateCondition(String dataPatch, String ifExpression) {
-        boolean result = false;
-        try {
-            Map<String, Object> ifExpressionInput = new HashMap<>();
-            if (!dataPatch.isBlank()) {
-                String[] keyValuePairArr = dataPatch.split(";");
-                for (String keyValuePair : keyValuePairArr) {
-                    String s[] = keyValuePair.split("#");
-                    String key = s[0];
-                    String value = s[1];
-                    NodeList nodeList = (NodeList) this.xPath.compile(value).evaluate(document, XPathConstants.NODESET);
-                    if (nodeList.getLength() > 0) {
-                        ifExpressionInput.put(key, nodeList.item(0).getTextContent());
-                    } else {
-                        ifExpressionInput.put(key, "");
-                    }
-                }
-
-                result = ConditionEvaluationUtils.evaluate(ifExpression, ifExpressionInput);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            return result;
-        }
-    }
-
-    @Override
-    public boolean evaluateCondition(String parentDataPatch, String dataPatch, String conditionExpression) {
-        boolean result = false;
-        try {
-            Map<String, Object> ifExpressionInput = new HashMap<>();
-            if (!dataPatch.isBlank()) {
-                String[] keyValuePairArr = dataPatch.split(";");
-                for (String keyValuePair : keyValuePairArr) {
-                    String s[] = keyValuePair.split("#");
-                    String key = s[0];
-                    if (key.startsWith("./")) {
-                        key = key.replace(".", parentDataPatch);
-                    }
-                    String value = s[1];
-                    NodeList nodeList = (NodeList) this.xPath.compile(value).evaluate(document, XPathConstants.NODESET);
-                    if (nodeList.getLength() > 0) {
-                        ifExpressionInput.put(key, nodeList.item(0).getTextContent());
-                    } else {
-                        ifExpressionInput.put(key, "");
-                    }
-                }
-
-                result = ConditionEvaluationUtils.evaluate(conditionExpression, ifExpressionInput);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            return result;
-        }
-    }
-
-    @Override
     public boolean evaluateSimpleIfCondition(String parentDataPatch, String dataPatch) {
         boolean result = false;
         try {

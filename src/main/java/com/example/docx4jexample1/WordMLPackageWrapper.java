@@ -35,40 +35,28 @@ public class WordMLPackageWrapper {
         while (!sdtBlockStack.empty()) {
             SdtElement sdtElement = sdtBlockStack.pop();
             if ("REMOVE".equals(sdtElement.getSdtPr().getTag().getVal())) {
-                System.out.println(sdtElement.getClass());
                 if (sdtElement instanceof SdtRun) {
                     ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
                     int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
                     if (blockIndex >= 0) {
                         contentAccessor.getContent().remove(blockIndex);
-//                        contentAccessor.getContent().addAll(blockIndex, sdtElement.getSdtContent().getContent());
                     }
                 } else if (sdtElement instanceof CTSdtRow) {
                     ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
                     int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
                     if (blockIndex >= 0) {
                         contentAccessor.getContent().remove(blockIndex);
-//                        contentAccessor.getContent().addAll(blockIndex, sdtElement.getSdtContent().getContent());
                     }
                 } else if (sdtElement instanceof SdtBlock) {
                     Object child = Utils.getContent(sdtElement.getSdtContent().getContent().get(0));
                     if (child instanceof P) {
-//                        ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
-//                        int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
-//                        if (blockIndex >= 0) {
-//                            contentAccessor.getContent().remove(blockIndex);
-////                            contentAccessor.getContent().addAll(blockIndex, sdtElement.getSdtContent().getContent());
-//                        }
                     } else {
                         ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
                         int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
                         if (blockIndex >= 0) {
                             contentAccessor.getContent().remove(blockIndex);
-//                            contentAccessor.getContent().addAll(blockIndex, sdtElement.getSdtContent().getContent());
                         }
                     }
-
-
                 }
             } else {
                 ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
@@ -139,51 +127,25 @@ public class WordMLPackageWrapper {
                         sdtElement.getSdtContent().getContent().removeAll(templateContents);
                     } else if (Utils.isIfNotControl(sdtElement)) {
                         List<Object> templateContents = List.copyOf(sdtElement.getSdtContent().getContent());
-//                        sdtElement.getSdtContent().getContent().removeAll(templateContents);
-//                        String ifExpression = Utils.getIfExpression(Utils.getAlias(sdtElement));
                         if (this.dataSource.evaluateSimpleIfNotCondition(parentDataPath, dataPatch)) {
-//                            sdtElement.getSdtContent().getContent().addAll(templateContents);
                             Iterator<Object> iterator = sdtElement.getSdtContent().getContent().iterator();
                             while (iterator.hasNext()) {
                                 Object child = iterator.next();
                                 processContent(child, parentDataPath);
                             }
-//                            for (Object child : sdtElement.getSdtContent().getContent()) {
-//                                processContent(child, parentDataPath);
-//                            }
                         } else {
-//                            sdtElement.getSdtContent().getContent().removeAll(templateContents);
                             sdtElement.getSdtPr().getTag().setVal("REMOVE");
-//                            sdtElement.getSdtContent().getContent().clear();
-//                            ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
-//                            contentAccessor.getContent().remove(sdtElement);
-//                            ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
-//                            contentAccessor.getContent().remove(sdtElement);
-//                            int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
-//                            contentAccessor.getContent().remove(blockIndex);
                         }
                     } else if (Utils.isIfControl(sdtElement)) {
                         List<Object> templateContents = List.copyOf(sdtElement.getSdtContent().getContent());
-//                        sdtElement.getSdtContent().getContent().removeAll(templateContents);
-//                        String ifExpression = Utils.getIfExpression(Utils.getAlias(sdtElement));
                         if (this.dataSource.evaluateSimpleIfCondition(parentDataPath, dataPatch)) {
-//                            sdtElement.getSdtContent().getContent().addAll(templateContents);
                             Iterator<Object> iterator = sdtElement.getSdtContent().getContent().iterator();
                             while (iterator.hasNext()) {
                                 Object child = iterator.next();
                                 processContent(child, parentDataPath);
                             }
-//                            for (Object child : sdtElement.getSdtContent().getContent()) {
-//                                processContent(child, parentDataPath);
-//                            }
                         } else {
-//                            sdtElement.getSdtContent().getContent().removeAll(templateContents);
                             sdtElement.getSdtPr().getTag().setVal("REMOVE");
-//                            sdtElement.getSdtContent().getContent().clear();
-//                            ContentAccessor contentAccessor = (ContentAccessor) sdtElement.getParent();
-//                            contentAccessor.getContent().remove(sdtElement);
-//                            int blockIndex = contentAccessor.getContent().indexOf(sdtElement);
-//                            contentAccessor.getContent().remove(blockIndex);
                         }
                     }
                 } else {
@@ -194,9 +156,6 @@ public class WordMLPackageWrapper {
                             Object child = iterator.next();
                             processContent(child, parentDataPath);
                         }
-//                        for (Object child : contentAccessor.getContent()) {
-//                            processContent(child, parentDataPath);
-//                        }
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
