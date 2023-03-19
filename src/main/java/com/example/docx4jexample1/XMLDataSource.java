@@ -36,6 +36,24 @@ public class XMLDataSource implements DataSource {
     }
 
     @Override
+    public Optional<String> getData(String parentDataPatch, String dataPatch) {
+        Optional<String> result = Optional.of("");
+        try {
+            if (dataPatch.startsWith("./")) {
+                dataPatch = dataPatch.replace(".", parentDataPatch);
+            }
+            NodeList repeatCount = (NodeList) this.xPath.compile(dataPatch).evaluate(document, XPathConstants.NODESET);
+            if (repeatCount.getLength() > 0) {
+                result = Optional.of(repeatCount.item(0).getTextContent());
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            return result;
+        }
+    }
+
+    @Override
     public List<String> getData2(String name) {
         return null;
     }
@@ -112,6 +130,42 @@ public class XMLDataSource implements DataSource {
         } finally {
             return result;
         }
+    }
+
+    @Override
+    public boolean evaluateSimpleIfCondition(String parentDataPatch, String dataPatch) {
+        boolean result = false;
+        try {
+            if (dataPatch.contains("/")) {
+                if (dataPatch.startsWith("./")) {
+                    NodeList nodeList = (NodeList) this.xPath.compile(dataPatch).evaluate(document, XPathConstants.NODESET);
+                    if (nodeList.getLength() > 0) {
+                        String value = nodeList.item(0).getTextContent();
+                        if ("Y".equals(value)) {
+                            result = true;
+                        }
+                    }
+                } else {
+                    dataPatch = dataPatch.replace(".", parentDataPatch);
+                    NodeList nodeList = (NodeList) this.xPath.compile(dataPatch).evaluate(document, XPathConstants.NODESET);
+                    if (nodeList.getLength() > 0) {
+                        String value = nodeList.item(0).getTextContent();
+                        if ("Y".equals(value)) {
+                            result = true;
+                        }
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            return result;
+        }
+    }
+
+    @Override
+    public boolean evaluateSimpleIfNotCondition(String parentDataPatch, String dataPatch) {
+        return !evaluateSimpleIfCondition(parentDataPatch, dataPatch);
     }
 
 }

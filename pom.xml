@@ -15,6 +15,7 @@
     <description>docx4j-example-1</description>
     <properties>
         <java.version>11</java.version>
+        <itext.pdfoffice.version>2.0.4</itext.pdfoffice.version>
     </properties>
     <dependencies>
         <dependency>
@@ -107,7 +108,28 @@
             <version>1.0.3</version>
         </dependency>
 
+        <dependency>
+            <groupId>fr.opensagres.xdocreport</groupId>
+            <artifactId>org.apache.poi.xwpf.converter.pdf</artifactId>
+            <version>1.0.6</version>
+        </dependency>
+
+        <!-- https://mvnrepository.com/artifact/com.itextpdf/root -->
+        <dependency>
+            <groupId>com.itextpdf</groupId>
+            <artifactId>root</artifactId>
+            <version>7.2.5</version>
+            <type>pom</type>
+        </dependency>
+
 <!--        <dependency>-->
+<!--            <groupId>com.itextpdf</groupId>-->
+<!--            <artifactId>pdfoffice</artifactId>-->
+<!--            <version>${itext.pdfoffice.version}</version>-->
+<!--        </dependency>-->
+
+
+        <!--        <dependency>-->
 <!--            <groupId>com.aspose</groupId>-->
 <!--            <artifactId>aspose-words</artifactId>-->
 <!--            <version>14.7.0</version>-->
@@ -119,6 +141,13 @@
             <artifactId>commons-jexl3</artifactId>
             <version>3.2.1</version>
         </dependency>
+        <dependency>
+            <groupId>com.aspose</groupId>
+            <artifactId>aspose-words</artifactId>
+            <version>20.1</version>
+            <classifier>jdk17</classifier>
+        </dependency>
+
 
 
         <dependency>
@@ -134,6 +163,23 @@
 <!--            <url>https://repo.e-iceblue.com/nexus/content/groups/public/</url>-->
 <!--        </repository>-->
 <!--    </repositories>-->
+    <!-- All add-ons and iText 7 core-->
+<!--    <repositories>-->
+<!--        <repository>-->
+<!--            <id>itext</id>-->
+<!--            <name>iText Repository - releases</name>-->
+<!--            <url>https://repo.itextsupport.com/releases</url>-->
+<!--        </repository>-->
+<!--    </repositories>-->
+    <repositories>
+        <repository>
+            <id>AsposeJavaAPI</id>
+            <name>Aspose Java API</name>
+            <url>https://repository.aspose.com/repo/</url>
+        </repository>
+
+    </repositories>
+
 
     <build>
         <plugins>

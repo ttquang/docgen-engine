@@ -1,23 +1,43 @@
 <?xml version="1.0"?>
 <application>
-    <App_Ref_No>Test</App_Ref_No>
-    <MC_Issue_Code>Test</MC_Issue_Code>
-    <MC_Issue_By>Test</MC_Issue_By>
-    <Main_applicant>
-        <Salutation>Test</Salutation>
-        <Thai_Name>Test</Thai_Name>
-        <Thai_Surname>Test</Thai_Surname>
-    </Main_applicant>
-    <Joint_applicant>
-        <sn>1</sn>
-        <Salutation>Test</Salutation>
-        <Thai_Name>Test</Thai_Name>
-        <Thai_Surname>Test</Thai_Surname>
-    </Joint_applicant>
-    <Joint_applicant>
-        <sn>2</sn>
-        <Salutation>Test</Salutation>
-        <Thai_Name>Test</Thai_Name>
-        <Thai_Surname>Test</Thai_Surname>
-    </Joint_applicant>
+    <App_Ref_No>011MO63000067</App_Ref_No>
+    <Nature_is_Permanent>N</Nature_is_Permanent>
+    <Booking_Branch>011 - Ratchadamri</Booking_Branch>
+    <RR>
+        <MC_Issue_Code></MC_Issue_Code>
+        <MC_Issue_By></MC_Issue_By>
+        <MC_Issue_Date></MC_Issue_Date>
+        <MO_Signing_Date>2020-03-10</MO_Signing_Date>
+        <Reg_Grand_Total>10,000,000.00</Reg_Grand_Total>
+    </RR>
+    <Main_Applicant>
+        <Salutation>คุณหญิง</Salutation>
+        <Thai_Name>้ฟสรท</Thai_Name>
+        <Thai_Surname>เีืฟไฟื</Thai_Surname>
+    </Main_Applicant>
+    <Joint_Applicant>
+        <JC_SN>1</JC_SN>
+        <Salutation>คุณหญิง</Salutation>
+        <Thai_Name>่นืืั</Thai_Name>
+        <Thai_Surname>ิพน</Thai_Surname>
+    </Joint_Applicant>
+    <Joint_Applicant>
+        <JC_SN>2</JC_SN>
+        <Salutation>คุณหญิง</Salutation>
+        <Thai_Name>กนืกนื</Thai_Name>
+        <Thai_Surname>่นื</Thai_Surname>
+    </Joint_Applicant>
+    <Reg_Facility>
+        <Reg_Fac_SN>1</Reg_Fac_SN>
+        <Reg_Number_Of_Cheque>1</Reg_Number_Of_Cheque>
+        <Reg_Sum_Total_Amount>10,000,000.00</Reg_Sum_Total_Amount>
+        <Reg_Prd_Type>ttb home loan</Reg_Prd_Type>
+        <Reg_Sub_Prd_Type>ttb home loan refinance</Reg_Sub_Prd_Type>
+        <Reg_Prd_Code>MGBD</Reg_Prd_Code>
+        <Fac_Detail>
+            <Fac_Det_Payee_Name>YEN DONNY</Fac_Det_Payee_Name>
+            <Fac_Det_Total_Amount>838,575.00</Fac_Det_Total_Amount>
+            <Fac_Det_Cross_Type></Fac_Det_Cross_Type>
+        </Fac_Detail>
+    </Reg_Facility>
 </application>

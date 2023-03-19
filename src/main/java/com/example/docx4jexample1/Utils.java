@@ -91,6 +91,20 @@ public class Utils {
         return false;
     }
 
+
+    public static boolean isIfNotControl(SdtElement sdtElement) {
+        for (Object prObj : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
+            if (prObj instanceof JAXBElement) {
+                if (((JAXBElement) prObj).getValue() instanceof SdtPr.Alias) {
+                    SdtPr.Alias alias = (SdtPr.Alias) ((JAXBElement) prObj).getValue();
+                    if (alias.getVal().startsWith("IfNot"))
+                        return true;
+                }
+            }
+        }
+        return false;
+    }
+
     public static boolean isIfControl(SdtElement sdtElement) {
         for (Object prObj : sdtElement.getSdtPr().getRPrOrAliasOrLock()) {
             if (prObj instanceof JAXBElement) {
