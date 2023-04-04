@@ -20,7 +20,8 @@ public class StoredProcedure1 {
     public String generateData(DocGenContext context) {
 //        jdbcTemplate.setResultsMapCaseInsensitive(true);
 
-        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("ORACLE_XML_TEST");
+        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName(context.getOracleXML());
+//        SimpleJdbcCall simpleJdbcCall = new SimpleJdbcCall(jdbcTemplate).withProcedureName("ORACLE_XML_TEST");
 
         SqlParameterSource in = new MapSqlParameterSource()
                 .addValue("in_application_no", context.getApplicationNo());

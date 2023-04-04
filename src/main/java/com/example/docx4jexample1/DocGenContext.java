@@ -8,6 +8,7 @@ import java.io.Serializable;
 public class DocGenContext implements Serializable {
 
     private String template;
+    private String oracleXML;
     private String applicationNo;
 
     public DocGenContext() {}
@@ -18,6 +19,14 @@ public class DocGenContext implements Serializable {
 
     public void setTemplate(String template) {
         this.template = template;
+    }
+
+    public String getOracleXML() {
+        return oracleXML;
+    }
+
+    public void setOracleXML(String oracleXML) {
+        this.oracleXML = oracleXML;
     }
 
     public String getApplicationNo() {
